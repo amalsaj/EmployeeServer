@@ -1,34 +1,39 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/collection");
+const bcrypt = require("bcrypt");
+const User = require("../models/user");
 
 const signin = async (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
 
-  // Check if username and password are provided
-  if (!username || !password) {
-    return res.status(400).send("Username and password are required.");
+  // Check if email and password are provided
+  if (!email || !password) {
+    return res.status(400).send("Email and password are required.");
   }
 
   try {
     // Check if the user exists in the database
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ email });
+
     if (!user) {
-      return res.status(404).send("User not found.");
+      // Avoid specifying if email or password is wrong
+      return res.status(400).json({ error: "Invalid credentials" });
     }
 
     // Check if the password matches
-    if (user.password !== password) {
-      return res.status(401).send("Incorrect password.");
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ error: "Invalid credentials" });
     }
 
-    // Generate token for authentication
-    const token = jwt.sign({ username }, process.env.JWT_SECRET, {
-      expiresIn: "3h",
+    // Generate JWT token
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
     });
 
-    res.json({ message: "Sign in successful", token: token });
+    // Send response
+    res.json({ message: "Sign in successful", token });
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error during sign in:", error);
     res.status(500).send("Internal server error.");
   }
 };
