@@ -5,7 +5,7 @@ const createEmployee = async (req, res) => {
   try {
     const currentUser = req.user;
     const user = await User.findById(currentUser._id);
-    
+
     // Check if the user exists
     if (!user) {
       return res.status(401).json("User not found.");
@@ -55,7 +55,7 @@ const createEmployee = async (req, res) => {
     await newEmployee.save();
 
     // Respond with a success message
-    console.log("Employee created successfully:", newEmployee);
+    console.log("Employee created successfully");
     res.status(200).send("Employee created successfully.");
   } catch (error) {
     console.error("Error:", error);
